@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>ECharts</title>
+    <script src="./eharts.min.js"></script>
+    <script src="./echarts-gl.js"></script>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.css' rel='stylesheet' />
+
+    <!-- 引入 echarts.js -->
+    <script src="./rtp copy.js"></script>
+    <script src="./flight.js"></script>
+
+</head>
+
+<body>
+
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    <div id="main" style="width: 100%;height:700px;"></div>
+</body>
+<script type="text/javascript">
+    mapboxgl.accessToken = 'pk.eyJ1Ijoid3VndW9qaWEiLCJhIjoiY2sxaHJrdHBkMGRzejNodGYzemd1dmx4ayJ9.8fy2i8p8CNdh3mf44AlZDg';
+    // 基于准备好的dom，初始化echarts实例
+    var chart = echarts.init(document.getElementById('main'));
+    chart.setOption({
+        mapbox3D: {
+            // container: 'main',
+            style: 'mapbox://styles/mapbox/light-v10',
+            center: [-87.61694, 41.86625],
+            zoom: 2,
+            pitch: 40,
+            bearing: 20,
+            antialias: true,
+            shading: 'realistic',
+            light: {
+                main: {
+                    intensity: 5,
+                    shadow: true,
+                    shadowQuality: 'high',
+                    alpha: 30
+                },
+                ambient: {
+                    intensity: 0
+                },
+
+            },
+            postEffect: {
+                enable: true,
+                bloom: {
+                    enable: false
+                },
+                SSAO: {
+                    radius: 1,
+                    intensity: 1,
+                    enable: true
+                },
+                depthOfField: {
+                    enable: false,
+                    focalRange: 10,
+                    blurRadius: 10,
+                    fstop: 1
+                }
+            },
+            temporalSuperSampling: {
+                enable: true
+            },
+        },
+        visualMap: {
+            max: 63000 * 3,
+            calculable: true,
+            realtime: true,
+            inRange: {
+                color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
+            },
+            outOfRange: {
+                colorAlpha: 0
+            },
+            seriesIndex: 1
+        },
+        series: []
+    });
+    if (1) { //无语义，单纯括起来，data2来源于flight.js为飞行轨迹,data来源于rtp copy。数据形式并无影响，只要有教程中的那些即可。
+        function getAirportCoord(idx) {
+            return [data2.airports[idx][3], data2.airports[idx][4]];
+        }
+        let routes = data2.routes.map(function(airline) {
+            return [
+                getAirportCoord(airline[1]),
+                getAirportCoord(airline[2])
+            ];
+        });
+        //数据加载
+        chart.setOption({
+            series: [{
+                type: 'lines3D',
+                coordinateSystem: 'mapbox3D',
+                effect: {
+                    show: true,
+                    trailWidth: 1,
+                    trailOpacity: 0.6,
+                    trailLength: 0.2,
+                    constantSpeed: 5
+                },
+                blendMode: 'lighter',
+                lineStyle: {
+                    width: 0.2,
+                    opacity: 0.1,
+                    color: 'rgb(50,50,150)'
+                },
+                datasetIndex: 1,
+                data: routes,
+                visualMap: false
+            }, {
+                type: 'bar3D',
+                coordinateSystem: 'mapbox3D',
+                shading: 'lambert',
+                data: data,
+                datasetIndex: 2,
+                barSize: 0.2,
+                minHeight: 0,
+                silent: true,
+                itemStyle: {
+                    color: 'orange'
+                        // opacity: 0.8
+                }
+            }]
+        });
+
+        window.addEventListener('keydown', function() {
+            chart.dispatchAction({
+                type: 'lines3DToggleEffect',
+
+            });
+        });
+    }
+
+    var map = chart.getModel().getComponent('mapbox3D').getMapbox();
+    with(map) {
+        setRenderWorldCopies(false)
+    }
+</script>
+
+
+</html>
